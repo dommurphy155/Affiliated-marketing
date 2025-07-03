@@ -1,0 +1,20 @@
+# Python cache and environment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# Logs and databases
+*.log
+bot_ecosystem.db
+
+# IDE/editor files
+.vscode/
+.idea/
+.DS_Store
+
+# Byte-compiled / optimized / DLL files
+*.so
