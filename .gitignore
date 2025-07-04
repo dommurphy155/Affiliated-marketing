@@ -56,3 +56,7 @@ cookies.json
 # Playwright browser downloads/cache
 .cache/
 ms-playwright/
+
+.ssh/
+id_github
+id_github.pub
