@@ -1,0 +1,38 @@
+Affiliated-marketing/.github/workflows/ .github/workflows
+/deploy.yml
+dommurphy155
+dommurphy155
+40 minutes ago
+31 lines (26 loc) · 737 Bytes
+
+name: Deploy Bot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run bot
+        run: python Main.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CLICKBANK_NICKNAME: ${{ secrets.CLICKBANK_NICKNAME }}
