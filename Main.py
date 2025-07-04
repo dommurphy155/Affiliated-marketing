@@ -1,41 +1,31 @@
 import os
-import logging
+from datetime import time
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
-from datetime import datetime
-
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# Load environment variables
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-
-# Define command handlers
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="💸 Money printer is ON!")
 
 async def daily_report(context: ContextTypes.DEFAULT_TYPE):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # Placeholder for actual data - update this with real earnings or logs
-    message = f"📈 Daily Report ({now}):\n- Earnings: £0\n- Clicks: 0\n- Conversions: 0"
-    await context.bot.send_message(chat_id=CHAT_ID, text=message)
+    chat_id = int(os.getenv("TELEGRAM_CHAT_ID"))
+    await context.bot.send_message(chat_id=chat_id, text="Daily report running...")
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bot started and ready.")
 
 def main():
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN not set")
 
-    # Commands
+    application = ApplicationBuilder().token(token).build()
+
+    # Add command handlers
     application.add_handler(CommandHandler("start", start))
 
-    # Daily report job
-    application.job_queue.run_daily(daily_report, time=datetime.now().time())
+    # Schedule daily_report to run every day at 9:00 AM UTC (adjust time as needed)
+    job_queue = application.job_queue
+    job_queue.run_daily(daily_report, time=time(hour=9, minute=0, second=0))
 
     # Start the bot
     application.run_polling()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
