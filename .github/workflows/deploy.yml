@@ -1,33 +1,15 @@
-name: Deploy Bot
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Set up Python 3.9
+      - uses: actions/checkout@v3
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
-
+          python-version: '3.8'  # or your version
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Bot syntax check
-        run: |
-          python -c "import Main; print('✅ Bot loaded successfully')"
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CLICKBANK_NICKNAME: ${{ secrets.CLICKBANK_NICKNAME }}
+      - name: Run bot check
+        run: python -c "import Main; print('✅ Bot loaded successfully')"
