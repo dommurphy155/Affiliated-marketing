@@ -64,8 +64,7 @@ node_modules/
 
 # Large files that cause issues on GitHub (Playwright browsers, virtualenv files)
 .cache/ms-playwright/
-venv/lib/
-venv/share/
+venv/
 
 # Others you might want to ignore
 *.egg-info/
