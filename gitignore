@@ -1,20 +1,54 @@
-# Python cache and environment
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*.so
 
-# Environment variables
+# Environment variables and secrets
 .env
+.env.*
+secrets.json
 
-# Logs and databases
+# Logs
 *.log
+
+# Databases
+*.sqlite
+*.db
 bot_ecosystem.db
 
-# IDE/editor files
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
 .vscode/
 .idea/
-.DS_Store
 
-# Byte-compiled / optimized / DLL files
-*.so
+# Python virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# OS generated files
+*.swp
+*.bak
+*.tmp
+
+# Token dump cache (if any)
+*.token
+*.session
+
+# Media/output
+/output/
+screenshots/
+captures/
+
+# Auto-generated static/post files (optional)
+autoposts/
+posts/
+uploads/
+
+# TikTok, Instagram, or browser artifacts
+cookies.json
+*.har
