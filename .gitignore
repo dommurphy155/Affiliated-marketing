@@ -44,22 +44,15 @@ env/
 screenshots/
 captures/
 
-# Auto-generated static/post files (optional)
+# Auto-generated static/post files
 autoposts/
 posts/
 uploads/
 
-# TikTok, Instagram, or browser artifacts
-cookies.json
+# Browser/cache junk
+.cookies.json
 *.har
 
-# Playwright browser downloads/cache
+# Playwright cache and binaries
 .cache/
 ms-playwright/
-
-.ssh/
-id_github
-id_github.pub
-
-venv/
-.cache/
