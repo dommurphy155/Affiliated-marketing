@@ -1,14 +1,7 @@
 import os
-import logging
 from datetime import time
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
-
-# Enable debug logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
-)
 
 async def daily_report(context: ContextTypes.DEFAULT_TYPE):
     chat_id = int(os.getenv("TELEGRAM_CHAT_ID"))
@@ -24,13 +17,10 @@ def main():
 
     application = ApplicationBuilder().token(token).build()
 
-    # Add command handlers
     application.add_handler(CommandHandler("start", start))
 
-    # Schedule daily_report to run every day at 9:00 AM UTC (adjust if needed)
     application.job_queue.run_daily(daily_report, time=time(hour=9, minute=0, second=0))
 
-    # Start the bot
     application.run_polling()
 
 if __name__ == "__main__":
