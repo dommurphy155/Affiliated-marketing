@@ -60,3 +60,6 @@ ms-playwright/
 .ssh/
 id_github
 id_github.pub
+
+venv/
+.cache/
