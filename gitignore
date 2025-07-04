@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *.so
+.ssh/id_github_new
 
 # Environment variables and secrets
 .env
