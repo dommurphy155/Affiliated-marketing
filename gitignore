@@ -35,20 +35,53 @@ env/
 *.bak
 *.tmp
 
-# Token dump cache (if any)
+# Token/session/cache dump
 *.token
 *.session
+*.cache/
+.cache/
 
-# Media/output
+# Output/media/screenshot dirs
 /output/
 screenshots/
 captures/
-
-# Auto-generated static/post files (optional)
-autoposts/
-posts/
 uploads/
 
-# TikTok, Instagram, or browser artifacts
+# Auto-generated static/post files
+autoposts/
+posts/
+
+# TikTok, Instagram, browser artifacts
 cookies.json
 *.har
+
+# Playwright-related browser installs & driver junk
+ms-playwright/
+.playwright/
+.playwright-cache/
+.cache/ms-playwright/
+
+# Node / JS project artifacts (if used)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git LFS or large binaries
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.exe
+*.dll
+*.bin
+
+# OS-specific
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Avoid accidentally tracking large browser files
+.cache/ms-playwright/**/chrome
+.cache/ms-playwright/**/firefox
+.cache/ms-playwright/**/webkit
