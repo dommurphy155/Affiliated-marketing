@@ -4,3 +4,4 @@ aiohttp
 playwright
 moviepy
 nest_asyncio
+pytest-playwright
