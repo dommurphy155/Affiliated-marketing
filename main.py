@@ -9,10 +9,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from playwright.async_api import async_playwright
 from video_generator import create_video
 from dotenv import load_dotenv
-
 import nest_asyncio
-nest_asyncio.apply()
 
+nest_asyncio.apply()
 logging.basicConfig(level=logging.INFO)
 
 PRODUCTS_FILE = "products.json"
@@ -166,7 +165,6 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def main():
     load_dotenv()
-
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     app = ApplicationBuilder().token(token).build()
 
@@ -182,7 +180,4 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    import nest_asyncio
-    nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-
