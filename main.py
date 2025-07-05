@@ -8,6 +8,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from playwright.async_api import async_playwright
 from video_generator import create_video
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
 
@@ -62,7 +63,8 @@ async def scrape_viral_product():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-    video_path = create_video(product_name, screenshot_path)
+    # Generate video asynchronously, ensure create_video is async or run in executor if sync
+    video_path = await asyncio.to_thread(create_video, product_name, screenshot_path)
     product["video_path"] = video_path if video_path else None
 
     products_db.append(product)
@@ -163,7 +165,6 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Bot is running.")
 
 async def main():
-    from dotenv import load_dotenv
     load_dotenv()
 
     token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -181,4 +182,10 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+    except RuntimeError:
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        new_loop.run_until_complete(main())
