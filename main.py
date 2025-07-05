@@ -163,7 +163,7 @@ async def weekly(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Bot is running.")
 
-async def main():
+async def launch_bot():
     load_dotenv()
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     app = ApplicationBuilder().token(token).build()
@@ -180,4 +180,5 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.get_event_loop().create_task(launch_bot())
+    asyncio.get_event_loop().run_forever()
