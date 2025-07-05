@@ -11,6 +11,7 @@ from video_generator import create_video
 from dotenv import load_dotenv
 import nest_asyncio
 
+# Enable nested async for already running loops (e.g., Jupyter or certain server envs)
 nest_asyncio.apply()
 logging.basicConfig(level=logging.INFO)
 
@@ -163,7 +164,7 @@ async def weekly(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Bot is running.")
 
-async def launch_bot():
+async def main():
     load_dotenv()
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     app = ApplicationBuilder().token(token).build()
@@ -179,6 +180,8 @@ async def launch_bot():
     logging.info("Bot running...")
     await app.run_polling()
 
+# ✅ Proper event loop handling to avoid "already running" errors
 if __name__ == "__main__":
-    asyncio.get_event_loop().create_task(launch_bot())
-    asyncio.get_event_loop().run_forever()
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
