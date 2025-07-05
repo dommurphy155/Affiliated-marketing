@@ -15,7 +15,6 @@ logging.basicConfig(level=logging.INFO)
 PRODUCTS_FILE = "products.json"
 EARNINGS_FILE = "earnings.json"
 
-# Load and save helpers
 def load_json(filename, default):
     if os.path.exists(filename):
         with open(filename, 'r') as f:
@@ -26,7 +25,6 @@ def save_json(filename, data):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
 
-# Load DBs
 products_db = load_json(PRODUCTS_FILE, [])
 earnings_db = load_json(EARNINGS_FILE, {"daily": 0, "weekly": 0})
 
@@ -63,7 +61,6 @@ async def scrape_viral_product():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-    # Generate video asynchronously, ensure create_video is async or run in executor if sync
     video_path = await asyncio.to_thread(create_video, product_name, screenshot_path)
     product["video_path"] = video_path if video_path else None
 
