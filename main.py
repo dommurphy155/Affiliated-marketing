@@ -11,7 +11,6 @@ from modules.status_checker import handle_status
 from modules.product_list import handle_products
 from modules.smart_router import unknown_command_handler
 
-# Load env + logging
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -24,7 +23,6 @@ async def main():
     try:
         app = ApplicationBuilder().token(token).build()
 
-        # Command bindings
         app.add_handler(CommandHandler("start", handle_status))
         app.add_handler(CommandHandler("status", handle_status))
         app.add_handler(CommandHandler("findproduct", findproduct_handler))
@@ -33,7 +31,6 @@ async def main():
         app.add_handler(CommandHandler("weekly", handle_weekly))
         app.add_handler(CommandHandler("products", handle_products))
 
-        # Fallback for unknown commands
         app.add_handler(MessageHandler(filters.COMMAND, unknown_command_handler))
 
         logging.info("Bot started and polling...")
