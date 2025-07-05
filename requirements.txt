@@ -1,7 +1,6 @@
 python-telegram-bot
-playwright
-aiohttp
-openai
-moviepy
-gTTS
 python-dotenv
+aiohttp
+playwright
+moviepy
+nest_asyncio
