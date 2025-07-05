@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes
 from modules.video_generator import generate_video_for_latest_product
 from modules.tiktok_uploader import upload_to_tiktok
 import logging
-
+from modules.video_generator import generate_video_for_latest_product
 async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await update.message.reply_text("🎬 Generating video...")
