@@ -1,1 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 venv/
+env/
+.env
+
+# Logs
+*.log
+
+# Data/files
+autoposts/
+products.json
+earnings.json
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
