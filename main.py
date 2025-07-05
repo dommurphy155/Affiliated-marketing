@@ -4,9 +4,12 @@ import asyncio
 import logging
 import aiohttp
 from datetime import datetime
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from playwright.async_api import async_playwright
+
+load_dotenv()  # Load .env values
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,7 +59,7 @@ async def scrape_viral_product():
 
         await browser.close()
 
-    potential_earnings = "£100/day (estimate)"  # You can replace or calculate this
+    potential_earnings = "£100/day (estimate)"  # Static for now
 
     product = {
         "id": len(products_db) + 1,
@@ -73,7 +76,7 @@ async def scrape_viral_product():
 async def post_video_to_tiktok(product):
     username = os.getenv("TIKTOK_EMAIL")
     password = os.getenv("TIKTOK_PASSWORD")
-    video_path = os.getenv("VIDEO_PATH")  # Must be set in your .env and file present on disk
+    video_path = os.getenv("VIDEO_PATH")  # Must be set and file must exist
 
     if not video_path or not os.path.exists(video_path):
         logging.error("Video file path not set or file does not exist. Aborting TikTok post.")
@@ -84,12 +87,10 @@ async def post_video_to_tiktok(product):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         context = await browser.new_context()
-
         page = await context.new_page()
-        await page.goto("https://www.tiktok.com/login")
 
-        # Login flow (adjust selectors if TikTok changes UI)
         try:
+            await page.goto("https://www.tiktok.com/login")
             await page.fill('input[name="username"]', username)
             await page.fill('input[name="password"]', password)
             await page.click('button[type="submit"]')
@@ -99,23 +100,20 @@ async def post_video_to_tiktok(product):
             await browser.close()
             return False
 
-        # Navigate to upload page
-        await page.goto("https://www.tiktok.com/upload")
-        await page.wait_for_selector('input[type="file"]', timeout=10000)
-
-        # Upload video
         try:
+            await page.goto("https://www.tiktok.com/upload")
+            await page.wait_for_selector('input[type="file"]', timeout=10000)
             await page.set_input_files('input[type="file"]', video_path)
-            await asyncio.sleep(5)  # Wait for upload processing (adjust timing)
-            # Click post button - replace selector with real if needed
+            await asyncio.sleep(5)
             await page.click('button[data-e2e="upload-post-button"]')
-            await asyncio.sleep(10)  # Wait for post confirmation
+            await asyncio.sleep(10)
         except Exception as e:
             logging.error(f"Failed to upload or post video: {e}")
             await browser.close()
             return False
 
         await browser.close()
+
     logging.info("Video posted successfully on TikTok.")
     return True
 
