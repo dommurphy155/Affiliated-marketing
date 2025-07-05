@@ -1,26 +1,36 @@
 import asyncio
-import nest_asyncio
-nest_asyncio.apply()
-
-from telegram.ext import ApplicationBuilder
 import logging
-from video_generator import create_video
-from content_generator import generate_content
-from autopost import post_to_socials
-from scraper import scrape_product
-from telemetry import log_event
-from affiliate_engine import get_affiliate_link
+import os
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram import Update
 
+# Initialize logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Load environment variables (make sure you have python-dotenv installed and .env file configured)
+from dotenv import load_dotenv
+load_dotenv()
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+# Example command handler
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Bot started. Ready to roll.")
 
 async def main():
-    app = ApplicationBuilder().token("YOUR_TELEGRAM_BOT_TOKEN").build()
+    if not TELEGRAM_BOT_TOKEN:
+        logger.error("Telegram Bot Token not found in environment variables!")
+        return
 
-    # Your bot handlers setup here
-    # e.g., app.add_handler(...)
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    logging.info("Bot running...")
+    # Add handlers here
+    app.add_handler(CommandHandler("start", start))
+
+    logger.info("Bot running...")
     await app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
