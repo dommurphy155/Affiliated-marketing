@@ -1,1 +1,5 @@
-async def handle_daily():\n    pass\n\nasync def handle_weekly():\n    pass\n
+async def handle_daily():
+    pass
+
+async def handle_weekly():
+    pass
