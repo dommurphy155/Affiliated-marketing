@@ -1,52 +1,40 @@
-import os, logging, nest_asyncio, asyncio
+import os
+import logging
+import nest_asyncio
 from dotenv import load_dotenv
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler, filters
-)
-from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler
+
+# Import your command handlers
 from modules.product_finder import handle as findproduct_handler
 from modules.video_poster import handle as postvideo_handler
 from modules.earnings_tracker import handle_daily, handle_weekly
 from modules.status_checker import handle_status
-from modules.product_list import handle_products
-from modules.smart_router import unknown_command_handler
+# Add other handlers similarly as needed
 
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-from utils.shutdown_handler import setup_shutdown_handler
-
-def cleanup():
-    # Clean resources here if needed
-    print("Cleaning up before exit...")
-
-setup_shutdown_handler(cleanup)
-
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logging.error("Bot token missing")
+        logging.error("TELEGRAM_BOT_TOKEN is not set in environment")
         return
 
-    try:
-        app = ApplicationBuilder().token(token).build()
+    app = ApplicationBuilder().token(token).build()
 
-        app.add_handler(CommandHandler("start", handle_status))
-        app.add_handler(CommandHandler("status", handle_status))
-        app.add_handler(CommandHandler("findproduct", findproduct_handler))
-        app.add_handler(CommandHandler("postvideo", postvideo_handler))
-        app.add_handler(CommandHandler("daily", handle_daily))
-        app.add_handler(CommandHandler("weekly", handle_weekly))
-        app.add_handler(CommandHandler("products", handle_products))
+    # Register command handlers
+    app.add_handler(CommandHandler("start", lambda update, context: update.message.reply_text("Bot started.")))
+    app.add_handler(CommandHandler("findproduct", findproduct_handler))
+    app.add_handler(CommandHandler("postvideo", postvideo_handler))
+    app.add_handler(CommandHandler("daily", handle_daily))
+    app.add_handler(CommandHandler("weekly", handle_weekly))
+    app.add_handler(CommandHandler("status", handle_status))
+    # Add any other handlers here
 
-        app.add_handler(MessageHandler(filters.COMMAND, unknown_command_handler))
-
-        logging.info("Bot started and polling...")
-        await app.run_polling()
-
-    except Exception as e:
-        logging.error(f"Bot failed to start: {e}")
+    logging.info("Bot started and running...")
+    await app.run_polling()
 
 if __name__ == "__main__":
+    import asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
