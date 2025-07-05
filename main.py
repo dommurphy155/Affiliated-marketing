@@ -1,7 +1,6 @@
 import os
 import logging
 import asyncio
-import nest_asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -46,6 +45,10 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Bot init + handler wiring
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        logging.error("❌ TELEGRAM_BOT_TOKEN not set in environment variables.")
+        return
+
     app = ApplicationBuilder().token(token).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -59,6 +62,5 @@ async def main():
     logging.info("✅ Bot running...")
     await app.run_polling()
 
-# Fix event loop conflicts and launch bot
-nest_asyncio.apply()
-asyncio.get_event_loop().run_until_complete(main())
+if __name__ == "__main__":
+    asyncio.run(main())
