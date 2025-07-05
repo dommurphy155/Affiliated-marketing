@@ -1,24 +1,36 @@
-import json, os
 
-CACHE_FILE = "cache/products.json"
+import os
+import json
+import logging
+
+# Path to your cache file
+CACHE_DIR = "cache"
+CACHE_FILE = os.path.join(CACHE_DIR, "products.json")
+
+# Ensure cache directory exists
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 def load_cache():
+    """Loads the cache from file safely."""
     if not os.path.exists(CACHE_FILE):
+        logging.warning("Cache file not found. Returning empty list.")
         return []
-    with open(CACHE_FILE, "r") as f:
-        return json.load(f)
+
+    try:
+        with open(CACHE_FILE, "r") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        logging.error(f"Error reading cache file: {e}")
+        return []
 
 def save_cache(data):
-    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
-    with open(CACHE_FILE, "w") as f:
-        json.dump(data, f)
+    """Saves data to the cache file."""
+    try:
+        with open(CACHE_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except IOError as e:
+        logging.error(f"Failed to write to cache file: {e}")
 
-def is_cached(product_id):
-    cache = load_cache()
-    return product_id in cache
-
-def add_to_cache(product_id):
-    cache = load_cache()
-    if product_id not in cache:
-        cache.append(product_id)
-        save_cache(cache)p
+def get_all_cached_products():
+    """Returns all cached products or empty list with failsafe."""
+    return load_cache()
