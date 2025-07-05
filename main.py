@@ -14,6 +14,14 @@ from modules.smart_router import unknown_command_handler
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+from utils.shutdown_handler import setup_shutdown_handler
+
+def cleanup():
+    # Clean resources here if needed
+    print("Cleaning up before exit...")
+
+setup_shutdown_handler(cleanup)
+
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
