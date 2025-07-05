@@ -1,9 +1,10 @@
+import asyncio
 import logging
 import os
+import nest_asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
 from dotenv import load_dotenv
-import asyncio
 
 # Load .env variables
 load_dotenv()
@@ -23,7 +24,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logger.error("Telegram Bot Token missing from environment.")
+        logger.error("Telegram Bot Token missing from environment variables.")
         return
 
     app = ApplicationBuilder().token(token).build()
@@ -34,6 +35,6 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
+    nest_asyncio.apply()
     loop = asyncio.get_event_loop()
-    loop.create_task(main())
-    loop.run_forever()
+    loop.run_until_complete(main())
