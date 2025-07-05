@@ -1,21 +1,25 @@
-from telegram import Update
-from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 import os
 import logging
-import nest_asyncio
 from dotenv import load_dotenv
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+)
 
-# Import your command handlers
+# Import your async handlers here, ensure they are async def
 from modules.product_finder import handle as findproduct_handler
 from modules.video_poster import handle as postvideo_handler
 from modules.earnings_tracker import handle_daily, handle_weekly
 from modules.status_checker import handle_status
-# Add other handlers similarly as needed
 
 load_dotenv()
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-# Proper async start command handler
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot started.")
 
@@ -27,19 +31,17 @@ async def main():
 
     app = ApplicationBuilder().token(token).build()
 
-    # Register command handlers
+    # Register your command handlers here
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("findproduct", findproduct_handler))
     app.add_handler(CommandHandler("postvideo", postvideo_handler))
     app.add_handler(CommandHandler("daily", handle_daily))
     app.add_handler(CommandHandler("weekly", handle_weekly))
     app.add_handler(CommandHandler("status", handle_status))
-    # Add any other handlers here
 
     logging.info("Bot started and running...")
     await app.run_polling()
 
 if __name__ == "__main__":
     import asyncio
-    nest_asyncio.apply()
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())
