@@ -21,16 +21,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logger.error("Telegram Bot Token missing from environment variables.")
+        logger.error("❌ TELEGRAM_BOT_TOKEN is missing.")
         return
 
     app = ApplicationBuilder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
 
-    logger.info("🤖 Bot started. Running...")
-    # This method internally manages the asyncio loop properly and blocks here.
-    app.run_polling()
+    logger.info("🤖 Bot running...")
+    app.run_polling()  # ✅ No asyncio.run()
 
 if __name__ == "__main__":
     main()
