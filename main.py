@@ -5,15 +5,16 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
-# Setup logging format and level
+# Setup logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
+# Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot is running.")
 
@@ -38,25 +39,31 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logging.error("TELEGRAM_BOT_TOKEN not set in environment variables.")
+        logging.error("TELEGRAM_BOT_TOKEN is not set in environment variables. Exiting.")
         return
 
-    app = ApplicationBuilder().token(token).build()
+    try:
+        app = ApplicationBuilder().token(token).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("findproduct", find_product))
-    app.add_handler(CommandHandler("postvideo", post_video))
-    app.add_handler(CommandHandler("products", products))
-    app.add_handler(CommandHandler("daily", daily))
-    app.add_handler(CommandHandler("weekly", weekly))
-    app.add_handler(CommandHandler("status", status))
+        # Register command handlers
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CommandHandler("findproduct", find_product))
+        app.add_handler(CommandHandler("postvideo", post_video))
+        app.add_handler(CommandHandler("products", products))
+        app.add_handler(CommandHandler("daily", daily))
+        app.add_handler(CommandHandler("weekly", weekly))
+        app.add_handler(CommandHandler("status", status))
 
-    logging.info("Bot running...")
-    await app.run_polling()
+        logging.info("Bot started and running...")
+        # Run polling without closing the loop to avoid RuntimeError
+        await app.run_polling()
+    except Exception as e:
+        logging.error(f"Exception in main: {e}", exc_info=True)
 
 if __name__ == "__main__":
     import nest_asyncio
-    import asyncio
 
     nest_asyncio.apply()
-    asyncio.run(main())
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
