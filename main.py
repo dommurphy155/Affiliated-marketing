@@ -1,43 +1,39 @@
 import asyncio
 import logging
 import os
-from dotenv import load_dotenv
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes
-)
+from dotenv import load_dotenv
 
-# Load .env
+# Load .env variables
 load_dotenv()
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
-# Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Bot is live and working.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Use /start to get going.")
 
-async def run_bot():
+async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logger.error("TELEGRAM_BOT_TOKEN not found.")
+        logger.error("Telegram Bot Token missing from environment variables.")
         return
 
     app = ApplicationBuilder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
 
-    logger.info("🤖 Bot started successfully.")
+    logger.info("🤖 Bot started. Running...")
     await app.run_polling()
 
-# Run bot using event loop compatible with PM2
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(run_bot())
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
