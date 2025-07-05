@@ -1,9 +1,9 @@
-import asyncio
 import logging
 import os
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update
 from dotenv import load_dotenv
+import asyncio
 
 # Load .env variables
 load_dotenv()
@@ -23,7 +23,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logger.error("Telegram Bot Token missing from environment variables.")
+        logger.error("Telegram Bot Token missing from environment.")
         return
 
     app = ApplicationBuilder().token(token).build()
