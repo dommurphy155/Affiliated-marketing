@@ -1,9 +1,20 @@
-from modules.utils.product_cache import is_cached, add_to_cache
+import json, os
 
-async def handle(update, context):
-    product = await scrape_new_product()
-    if is_cached(product['id']):
-        await update.message.reply_text("⚠️ Product already posted. Finding another...")
-        return
-    add_to_cache(product['id'])
-    await update.message.reply_text(f"✅ New Product:\n{product['title']}\n{product['url']}")
+CACHE_FILE = "cache/products.json"
+
+def ensure_cache_dir():
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+
+def get_all_cached_products():
+    ensure_cache_dir()
+    if not os.path.exists(CACHE_FILE):
+        return []
+    with open(CACHE_FILE, "r") as f:
+        return json.load(f)
+
+def cache_product(product: dict):
+    ensure_cache_dir()
+    data = get_all_cached_products()
+    data.insert(0, product)
+    with open(CACHE_FILE, "w") as f:
+        json.dump(data[:20], f, indent=2)  # limit to 20 entries
