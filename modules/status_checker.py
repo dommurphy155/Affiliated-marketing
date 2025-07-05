@@ -1,2 +1,1 @@
-async def handle_status():
-    pass
+async def handle_status():\n    pass\n
