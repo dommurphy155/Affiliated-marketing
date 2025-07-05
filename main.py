@@ -1,10 +1,9 @@
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 import os
 import logging
 import nest_asyncio
 from dotenv import load_dotenv
-from telegram.ext import ApplicationBuilder, CommandHandler
 
 # Import your command handlers
 from modules.product_finder import handle as findproduct_handler
@@ -16,6 +15,10 @@ from modules.status_checker import handle_status
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+# Proper async start command handler
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bot started.")
+
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
@@ -25,7 +28,7 @@ async def main():
     app = ApplicationBuilder().token(token).build()
 
     # Register command handlers
-    app.add_handler(CommandHandler("start", lambda update, context: update.message.reply_text("Bot started.")))
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("findproduct", findproduct_handler))
     app.add_handler(CommandHandler("postvideo", postvideo_handler))
     app.add_handler(CommandHandler("daily", handle_daily))
