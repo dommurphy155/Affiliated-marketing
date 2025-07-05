@@ -2,13 +2,9 @@ import os
 import logging
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes,
-)
+from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 
-# Import your async handlers here, ensure they are async def
+# Import your command handlers
 from modules.product_finder import handle as findproduct_handler
 from modules.video_poster import handle as postvideo_handler
 from modules.earnings_tracker import handle_daily, handle_weekly
