@@ -4,66 +4,41 @@ import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import nest_asyncio
 
-# Load environment variables
 load_dotenv()
 
-# Setup logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-# Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot is running.")
 
-async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Finding a viral product... (placeholder)")
-
-async def post_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Posting video to all platforms... (placeholder)")
-
-async def products(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Listing saved products... (placeholder)")
-
-async def daily(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Daily earnings: £0.00 (placeholder)")
-
-async def weekly(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Weekly earnings: £0.00 (placeholder)")
-
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Status: Bot is operational.")
+# Add your other handlers here
 
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        logging.error("TELEGRAM_BOT_TOKEN is not set in environment variables. Exiting.")
+        logging.error("TELEGRAM_BOT_TOKEN not set in environment variables.")
         return
 
-    try:
-        app = ApplicationBuilder().token(token).build()
+    app = ApplicationBuilder().token(token).build()
 
-        # Register command handlers
-        app.add_handler(CommandHandler("start", start))
-        app.add_handler(CommandHandler("findproduct", find_product))
-        app.add_handler(CommandHandler("postvideo", post_video))
-        app.add_handler(CommandHandler("products", products))
-        app.add_handler(CommandHandler("daily", daily))
-        app.add_handler(CommandHandler("weekly", weekly))
-        app.add_handler(CommandHandler("status", status))
+    app.add_handler(CommandHandler("start", start))
+    # Add other handlers here
 
-        logging.info("Bot started and running...")
-        # Run polling without closing the loop to avoid RuntimeError
-        await app.run_polling()
-    except Exception as e:
-        logging.error(f"Exception in main: {e}", exc_info=True)
+    logging.info("Bot started and running...")
+    await app.run_polling()
 
 if __name__ == "__main__":
-    import nest_asyncio
-
     nest_asyncio.apply()
-
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    try:
+        loop.run_until_complete(main())
+    except RuntimeError as e:
+        if "Cannot close a running event loop" in str(e):
+            pass  # Known issue, ignore
+        else:
+            raise
