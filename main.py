@@ -10,6 +10,9 @@ from playwright.async_api import async_playwright
 from video_generator import create_video
 from dotenv import load_dotenv
 
+import nest_asyncio
+nest_asyncio.apply()
+
 logging.basicConfig(level=logging.INFO)
 
 PRODUCTS_FILE = "products.json"
