@@ -42,7 +42,6 @@ async def weekly(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📡 Status: Bot is operational.")
 
-# Bot init + handler wiring
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
@@ -62,7 +61,8 @@ async def main():
     logging.info("✅ Bot running...")
     await app.run_polling()
 
-import asyncio
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+
+Do I have to add this to my console as well of github?
