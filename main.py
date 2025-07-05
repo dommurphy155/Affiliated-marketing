@@ -42,3 +42,7 @@ if __name__ == "__main__":
             pass  # Known issue, ignore
         else:
             raise
+
+from modules.profit_snapshot import handle_profitsnapshot
+app.add_handler(CommandHandler("profitsnapshot", handle_profitsnapshot))
+
