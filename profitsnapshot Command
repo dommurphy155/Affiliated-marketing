@@ -1,0 +1,6 @@
+from telegram import Update
+from telegram.ext import ContextTypes
+
+async def handle_profitsnapshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Dummy values
+    await update.message.reply_text("📊 Profit Snapshot:\n- Today: £31.40\n- Week: £219.90\n- CTR: 2.4%\n- Top Product: 'LeanBody AI'")
