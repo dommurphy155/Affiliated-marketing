@@ -1,7 +1,7 @@
-python-telegram-bot
-python-dotenv
-aiohttp
+python-telegram-bot==20.7
 playwright
-moviepy
-nest_asyncio
-pytest-playwright
+beautifulsoup4
+requests
+aiohttp
+openai
+python-dotenv
