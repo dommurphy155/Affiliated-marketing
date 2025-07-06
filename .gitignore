@@ -3,18 +3,16 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-venv/
-.evn
+
+
 
 # Logs
 *.log
 
-# Data/files
-autoposts/
-products.json
-earnings.json
-
-# IDE/editor files
 .vscode/
 .idea/
 *.swp
+
+deploy.sh
+
+
