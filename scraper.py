@@ -2,110 +2,213 @@ import asyncio
 import aiohttp
 import logging
 from bs4 import BeautifulSoup
+from typing import List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-CLICKBANK_TOP_OFFERS_URL = "https://www.clickbank.com/top-marketplaces/"
-AMAZON_UK_TRENDING_URL = "https://www.amazon.co.uk/gp/bestsellers/digital-text/362250031"
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36"
-}
+def clean_text(text):
+    return text.strip().replace('\n', ' ').replace('\r', '').replace('  ', ' ')
 
-async def fetch_html(session, url):
+
+def calculate_viral_score(gravity: float = 1.0, commission: float = 1.0):
     try:
-        async with session.get(url, headers=headers, timeout=30) as response:
-            response.raise_for_status()
-            return await response.text()
-    except Exception as e:
-        logger.error(f"[FETCH ERROR] {url} - {e}")
-        return ""
-
-def calculate_viral_score(gravity, commission):
-    try:
-        gravity_val = float(gravity)
-        commission_val = float(commission.strip('%').replace('$', ''))
-        return gravity_val * commission_val
-    except Exception:
+        return float(gravity) * float(commission)
+    except:
         return 0
 
-def parse_clickbank_offers(html):
+
+async def fetch(session, url):
+    try:
+        async with session.get(url, timeout=20) as resp:
+            if resp.status != 200:
+                logger.warning(f"Non-200 from {url}")
+                return ""
+            return await resp.text()
+    except Exception as e:
+        logger.warning(f"Fetch error from {url}: {e}")
+        return ""
+
+
+# 1. ClickBank
+async def scrape_clickbank(session):
+    url = "https://www.clickbank.com/marketplace"
+    html = await fetch(session, url)
     soup = BeautifulSoup(html, "html.parser")
-    offers = []
-    rows = soup.select("table.marketplace-table tr")[1:]
+    results = []
 
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) < 4:
-            continue
-
+    for offer in soup.select("div.card")[:10]:
         try:
-            name = cols[0].get_text(strip=True)
-            price = cols[1].get_text(strip=True)
-            commission = cols[2].get_text(strip=True)
-            gravity = cols[3].get_text(strip=True)
-            url = cols[0].find("a")["href"] if cols[0].find("a") else ""
-            viral_score = calculate_viral_score(gravity, commission)
-            offers.append({
-                "source": "ClickBank",
+            name = clean_text(offer.select_one(".product-title").text)
+            commission = clean_text(offer.select_one(".commission").text).replace("%", "").replace("$", "")
+            gravity = "1.0"  # Fallback for viral score
+            link = offer.select_one("a")["href"]
+            results.append({
                 "name": name,
-                "price": price,
+                "price": "N/A",
                 "commission": commission,
                 "gravity": gravity,
-                "url": url,
-                "viral_score": viral_score
+                "url": link,
+                "source": "ClickBank",
+                "viral_score": calculate_viral_score(gravity, commission)
             })
-        except Exception as e:
-            logger.warning(f"[CLICKBANK PARSE ERROR] {e}")
-    return offers
+        except Exception:
+            continue
 
-def parse_amazon_uk_offers(html):
+    return results
+
+
+# 2. Amazon UK – Best Sellers
+async def scrape_amazon(session):
+    url = "https://www.amazon.co.uk/gp/bestsellers"
+    html = await fetch(session, url)
     soup = BeautifulSoup(html, "html.parser")
-    offers = []
-    items = soup.select("div.zg-grid-general-faceout")
+    results = []
 
-    for item in items:
+    for li in soup.select("div.zg-grid-general-faceout")[:10]:
         try:
-            title = item.select_one("div.p13n-sc-truncated, div._cDEzb_p13n-sc-css-line-clamp-1_1Fn1y").get_text(strip=True)
-            url_tag = item.find("a", href=True)
-            url = "https://www.amazon.co.uk" + url_tag["href"] if url_tag else ""
-            offers.append({
-                "source": "Amazon UK",
+            title = clean_text(li.select_one(".p13n-sc-truncated").text)
+            link = "https://www.amazon.co.uk" + li.select_one("a")["href"]
+            results.append({
                 "name": title,
                 "price": "N/A",
                 "commission": "N/A",
-                "gravity": "N/A",
-                "url": url,
-                "viral_score": 0
+                "gravity": "1.0",
+                "url": link,
+                "source": "Amazon UK",
+                "viral_score": 1.0
             })
-        except Exception as e:
-            logger.warning(f"[AMAZON PARSE ERROR] {e}")
-    return offers
+        except Exception:
+            continue
 
-async def scrape_clickbank():
+    return results
+
+
+# 3. eBay
+async def scrape_ebay(session):
+    url = "https://www.ebay.co.uk/deals"
+    html = await fetch(session, url)
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+
+    for li in soup.select("div.ebayui-dne-item-featured-card")[:10]:
+        try:
+            name = clean_text(li.select_one("h3").text)
+            link = li.select_one("a")["href"]
+            results.append({
+                "name": name,
+                "price": "N/A",
+                "commission": "N/A",
+                "gravity": "1.0",
+                "url": link,
+                "source": "eBay",
+                "viral_score": 1.0
+            })
+        except Exception:
+            continue
+
+    return results
+
+
+# 4. Etsy
+async def scrape_etsy(session):
+    url = "https://www.etsy.com/uk/c/trending"
+    html = await fetch(session, url)
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+
+    for item in soup.select("li.wt-list-unstyled")[:10]:
+        try:
+            link_el = item.select_one("a")
+            title = clean_text(link_el.text)
+            link = link_el["href"]
+            results.append({
+                "name": title,
+                "price": "N/A",
+                "commission": "N/A",
+                "gravity": "1.0",
+                "url": link,
+                "source": "Etsy",
+                "viral_score": 1.0
+            })
+        except Exception:
+            continue
+
+    return results
+
+
+# 5. JVZoo
+async def scrape_jvzoo(session):
+    url = "https://www.jvzoo.com/"
+    html = await fetch(session, url)
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+
+    for tr in soup.select("table tr")[1:11]:
+        try:
+            cols = tr.find_all("td")
+            if len(cols) < 2:
+                continue
+            name = clean_text(cols[0].text)
+            results.append({
+                "name": name,
+                "price": "N/A",
+                "commission": "N/A",
+                "gravity": "1.0",
+                "url": "https://www.jvzoo.com/",
+                "source": "JVZoo",
+                "viral_score": 1.0
+            })
+        except Exception:
+            continue
+
+    return results
+
+
+# 6. WarriorPlus
+async def scrape_warriorplus(session):
+    url = "https://warriorplus.com/deal-of-the-day"
+    html = await fetch(session, url)
+    soup = BeautifulSoup(html, "html.parser")
+    results = []
+
+    for offer in soup.select("div.warrior-offer")[:10]:
+        try:
+            name = clean_text(offer.select_one("h2").text)
+            link = offer.select_one("a")["href"]
+            results.append({
+                "name": name,
+                "price": "N/A",
+                "commission": "N/A",
+                "gravity": "1.0",
+                "url": link,
+                "source": "WarriorPlus",
+                "viral_score": 1.0
+            })
+        except Exception:
+            continue
+
+    return results
+
+
+# Combine all
+async def scrape_all() -> List[dict]:
     async with aiohttp.ClientSession() as session:
-        html = await fetch_html(session, CLICKBANK_TOP_OFFERS_URL)
-        return parse_clickbank_offers(html) if html else []
+        tasks = [
+            scrape_clickbank(session),
+            scrape_amazon(session),
+            scrape_ebay(session),
+            scrape_etsy(session),
+            scrape_jvzoo(session),
+            scrape_warriorplus(session)
+        ]
+        results = await asyncio.gather(*tasks)
+        all_products = [item for sublist in results for item in sublist]
+        return sorted(all_products, key=lambda x: x["viral_score"], reverse=True)
 
-async def scrape_amazon_uk():
-    async with aiohttp.ClientSession() as session:
-        html = await fetch_html(session, AMAZON_UK_TRENDING_URL)
-        return parse_amazon_uk_offers(html) if html else []
-
-async def scrape_all():
-    logger.info("Scraping all sources...")
-    results = await asyncio.gather(
-        scrape_clickbank(),
-        scrape_amazon_uk(),
-    )
-    all_products = [item for sublist in results for item in sublist]
-    # Sort by viral score if present
-    all_products.sort(key=lambda x: x.get("viral_score", 0), reverse=True)
-    logger.info(f"Scraped total products: {len(all_products)}")
-    return all_products
 
 if __name__ == "__main__":
-    offers = asyncio.run(scrape_all())
-    for offer in offers[:10]:
-        print(f"{offer['source']} | {offer['name']} | {offer['url']}")
+    results = asyncio.run(scrape_all())
+    for r in results[:10]:
+        print(f"{r['source']} | {r['name']} | {r['url']}")
