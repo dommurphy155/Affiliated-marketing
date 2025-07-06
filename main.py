@@ -3,6 +3,7 @@ import logging
 import signal
 import sys
 import os
+
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -12,146 +13,143 @@ from telegram.ext import (
     PicklePersistence,
 )
 
-# Import your existing scraper and poster modules
-from scraper import find_products  # async def find_products()
-from poster import post_video      # async def post_video(product)
-from daily_report import send_daily_report  # async def send_daily_report(context)
-from daily_report import send_weekly_report  # async def send_weekly_report(context)
+from scraper import scrape_clickbank_top_offers
+from poster import post_video
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+CLICKBANK_NICKNAME = os.getenv("CLICKBANK_NICKNAME")
+TIKTOK_EMAIL = os.getenv("TIKTOK_EMAIL")
+TIKTOK_PASSWORD = os.getenv("TIKTOK_PASSWORD")
+
 if not BOT_TOKEN:
     print("ERROR: TELEGRAM_BOT_TOKEN env var not set. Exiting.")
     sys.exit(1)
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
 persistence = PicklePersistence(filepath="bot_data.pkl")
+
 shutdown_event = asyncio.Event()
+
 
 def shutdown_signal_handler(signum, frame):
     logger.info(f"Received shutdown signal: {signum}, shutting down gracefully...")
     shutdown_event.set()
 
-# Commands
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     await update.message.reply_html(
-        rf"Hi {user.mention_html()}! Bot is running 🚀",
-        quote=True,
+        rf"Hi {user.mention_html()}! Bot is running 🚀", quote=True
     )
-    logger.info(f"/start by user {user.id}")
+    logger.info(f"/start command triggered by user {user.id}")
+
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
-    await update.message.reply_text("Bot shutting down gracefully.")
-    logger.info(f"/stop by user {user.id}")
+    await update.message.reply_text("Stopping bot gracefully...")
+    logger.info(f"/stop command triggered by user {user.id}")
+    await context.application.stop()
+    await context.application.shutdown()
     shutdown_event.set()
 
+
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Add your custom status info here
-    status_msg = "Bot is running.\n"
-    status_msg += f"Active users: {len(context.application.persistence.user_data)}\n"
-    await update.message.reply_text(status_msg)
-    logger.info(f"/status by user {update.effective_user.id}")
+    # You can expand with actual status info later
+    await update.message.reply_text("Bot is online and operational.")
+
 
 async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    await update.message.reply_text("Finding best products, please wait...")
-    logger.info(f"/findproduct triggered by user {user.id}")
+    await update.message.reply_text("Starting product scraping...")
+    logger.info("Product scraping started by user command")
     try:
-        products = await find_products()  # Your scraper async func returns list/dict of products
+        products = await asyncio.to_thread(scrape_clickbank_top_offers)
         if not products:
-            await update.message.reply_text("No products found. Try again later.")
+            await update.message.reply_text("No products found.")
             return
-        # Format top 10 products info nicely
-        text = "Top 10 Products:\n"
-        for i, p in enumerate(products[:10], 1):
-            text += f"{i}. {p['name']} - ${p['price']} - Commission: {p['commission']}%\n"
-        await update.message.reply_text(text)
+
+        msg = "Top ClickBank offers:\n"
+        for p in products[:10]:
+            # Expected product dict keys: name, price, commission, url, etc.
+            msg += (
+                f"- {p['name']} | Price: {p['price']} | Commission: {p['commission']}\n"
+                f"  {p['url']}\n"
+            )
+        await update.message.reply_text(msg)
     except Exception as e:
         logger.error(f"Error in find_product: {e}", exc_info=True)
-        await update.message.reply_text("Error finding products. Try again later.")
+        await update.message.reply_text("Error occurred during scraping.")
+
 
 async def postvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    await update.message.reply_text("Posting video to TikTok and others...")
-    logger.info(f"/postvideo triggered by user {user.id}")
+    await update.message.reply_text("Starting video posting...")
+    logger.info("Video posting started by user command")
     try:
-        # Example: post top product or product id passed as argument
-        product = None
-        if context.args:
-            product_id = context.args[0]
-            # Fetch product by id from your DB or cache - stub here:
-            product = {"id": product_id, "name": "Sample Product"}
-        else:
-            # fallback to last found or best product - stub here:
-            product = {"id": "123", "name": "Sample Product"}
-        await post_video(product)
-        await update.message.reply_text(f"Video posted for product: {product['name']}")
+        result = await post_video()
+        await update.message.reply_text(f"Video posted successfully: {result}")
     except Exception as e:
         logger.error(f"Error in postvideo: {e}", exc_info=True)
-        await update.message.reply_text("Failed to post video.")
+        await update.message.reply_text("Error occurred during video posting.")
 
-async def daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    await update.message.reply_text("Generating daily report...")
-    logger.info(f"/dailyreport triggered by user {user.id}")
-    try:
-        await send_daily_report(context)
-        await update.message.reply_text("Daily report sent.")
-    except Exception as e:
-        logger.error(f"Error in daily_report: {e}", exc_info=True)
-        await update.message.reply_text("Failed to send daily report.")
-
-async def weekly_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    await update.message.reply_text("Generating weekly report...")
-    logger.info(f"/weeklyreport triggered by user {user.id}")
-    try:
-        await send_weekly_report(context)
-        await update.message.reply_text("Weekly report sent.")
-    except Exception as e:
-        logger.error(f"Error in weekly_report: {e}", exc_info=True)
-        await update.message.reply_text("Failed to send weekly report.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
-        "/start - Start bot\n"
-        "/stop - Stop bot\n"
-        "/status - Get bot status\n"
-        "/findproduct - Find top products\n"
-        "/postvideo [product_id] - Post video of product\n"
-        "/dailyreport - Get daily earnings report\n"
-        "/weeklyreport - Get weekly earnings report\n"
-        "/help - Show this help\n"
+        "/start - Start the bot\n"
+        "/stop - Stop the bot\n"
+        "/status - Get current status\n"
+        "/findproduct - Scrape and list top products\n"
+        "/postvideo - Post a product video on TikTok\n"
+        "/help - Show this help message\n"
+        "/dailyreport - Show today's sales report\n"
+        "/weeklyreport - Show this week's sales report\n"
+        "/resetstats - Reset performance stats\n"
     )
     await update.message.reply_text(help_text)
     logger.info(f"/help command triggered by user {update.effective_user.id}")
+
+
+async def dailyreport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Placeholder - integrate your daily report logic here
+    await update.message.reply_text("Daily report: Not implemented yet.")
+
+
+async def weeklyreport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Placeholder - integrate your weekly report logic here
+    await update.message.reply_text("Weekly report: Not implemented yet.")
+
+
+async def resetstats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Placeholder - implement stats reset logic if needed
+    await update.message.reply_text("Stats reset: Not implemented yet.")
+
 
 async def main() -> None:
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, shutdown_signal_handler, sig, None)
 
-    app = ApplicationBuilder() \
-        .token(BOT_TOKEN) \
-        .persistence(persistence) \
-        .defaults(Defaults(parse_mode="HTML")) \
+    app = (
+        ApplicationBuilder()
+        .token(BOT_TOKEN)
+        .persistence(persistence)
+        .defaults(Defaults(parse_mode="HTML"))
         .build()
+    )
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stop", stop))
     app.add_handler(CommandHandler("status", status))
     app.add_handler(CommandHandler("findproduct", find_product))
     app.add_handler(CommandHandler("postvideo", postvideo))
-    app.add_handler(CommandHandler("dailyreport", daily_report))
-    app.add_handler(CommandHandler("weeklyreport", weekly_report))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("dailyreport", dailyreport))
+    app.add_handler(CommandHandler("weeklyreport", weeklyreport))
+    app.add_handler(CommandHandler("resetstats", resetstats))
 
     await app.initialize()
     await app.start()
@@ -163,6 +161,7 @@ async def main() -> None:
     await app.stop()
     await app.shutdown()
     logger.info("Bot stopped cleanly. Exiting.")
+
 
 if __name__ == "__main__":
     try:
