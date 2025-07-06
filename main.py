@@ -15,26 +15,17 @@ async def main():
         sys.exit(1)
 
     app = ApplicationBuilder().token(token).build()
+
     app.add_handler(CommandHandler("uptime", handle_uptime))
     app.add_handler(CommandHandler("memory", handle_memory))
     app.add_handler(CommandHandler("kill", handle_kill))
     app.add_handler(CommandHandler("restart", handle_restart))
     app.add_handler(CommandHandler("log", handle_log))
 
-    await app.initialize()
-    await app.start()
-    print("Bot started and polling...")
-
-    await app.updater.start_polling()
-    await asyncio.Event().wait()
+    await app.run_polling()
 
 if __name__ == "__main__":
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.ensure_future(main())
-            loop.run_forever()
-        else:
-            loop.run_until_complete(main())
+        asyncio.run(main())
     except (RuntimeError, KeyboardInterrupt) as e:
         print(f"Exiting: {e}", file=sys.stderr)
