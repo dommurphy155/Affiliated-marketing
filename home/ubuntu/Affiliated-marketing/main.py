@@ -35,18 +35,15 @@ logger = logging.getLogger(__name__)
 persistence = PicklePersistence(filepath="bot_data.pkl")
 shutdown_event = asyncio.Event()
 
-
 def shutdown_signal_handler(signum, frame):
     logger.info(f"Received shutdown signal: {signum}, shutting down gracefully...")
     shutdown_event.set()
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     await update.message.reply_html(
-        rf"Hi {user.mention_html()}! Bot is running 🚀", quote=True
+        rf"Hi {user.mention_html()}! Bot is running.", quote=True
     )
-
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Stopping bot gracefully...")
@@ -54,10 +51,8 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.application.shutdown()
     shutdown_event.set()
 
-
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Bot is online and operational.")
-
 
 async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Starting product scraping...")
@@ -78,7 +73,6 @@ async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         logger.error(f"Error in find_product: {e}", exc_info=True)
         await update.message.reply_text("Error occurred during scraping.")
 
-
 async def postvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Generating and posting video...")
     try:
@@ -87,7 +81,6 @@ async def postvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     except Exception as e:
         logger.error(f"Error in postvideo: {e}", exc_info=True)
         await update.message.reply_text("Failed to post video.")
-
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
@@ -99,7 +92,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/help - Show this help\n"
     )
     await update.message.reply_text(help_text)
-
 
 async def main() -> None:
     loop = asyncio.get_running_loop()
@@ -129,7 +121,6 @@ async def main() -> None:
     await app.updater.stop_polling()
     await app.stop()
     await app.shutdown()
-
 
 if __name__ == "__main__":
     try:
