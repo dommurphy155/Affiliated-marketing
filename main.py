@@ -11,7 +11,7 @@ from modules.log_reporter import handle_log
 async def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
-        print("ERROR: TELEGRAM_BOT_TOKEN not set in environment.", file=sys.stderr)
+        print("ERROR: TELEGRAM_BOT_TOKEN is missing.", file=sys.stderr)
         sys.exit(1)
 
     app = ApplicationBuilder().token(token).build()
@@ -22,10 +22,7 @@ async def main():
     app.add_handler(CommandHandler("restart", handle_restart))
     app.add_handler(CommandHandler("log", handle_log))
 
-    try:
-        await app.run_polling()
-    except Exception as e:
-        print(f"Error running bot: {e}", file=sys.stderr)
+    await app.run_polling()
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
