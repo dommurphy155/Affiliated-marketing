@@ -4,6 +4,9 @@ import signal
 import sys
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
