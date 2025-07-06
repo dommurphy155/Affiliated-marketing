@@ -13,7 +13,7 @@ from telegram.ext import (
     PicklePersistence,
 )
 
-from scraper import scrape_clickbank_top_offers
+from scraper import scrape_all
 from poster import post_video
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -35,9 +35,11 @@ logger = logging.getLogger(__name__)
 persistence = PicklePersistence(filepath="bot_data.pkl")
 shutdown_event = asyncio.Event()
 
+
 def shutdown_signal_handler(signum, frame):
     logger.info(f"Received shutdown signal: {signum}, shutting down gracefully...")
     shutdown_event.set()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -45,24 +47,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         rf"Hi {user.mention_html()}! Bot is running.", quote=True
     )
 
+
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Stopping bot gracefully...")
+    await update.message.reply_text("Stopping bot.")
     await context.application.stop()
     await context.application.shutdown()
     shutdown_event.set()
 
+
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Bot is online and operational.")
+    await update.message.reply_text("Bot is live and operational.")
+
 
 async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Starting product scraping...")
+    await update.message.reply_text("Scraping products...")
     try:
-        products = await asyncio.to_thread(scrape_clickbank_top_offers)
+        products = await asyncio.to_thread(scrape_all)
         if not products:
             await update.message.reply_text("No products found.")
             return
 
-        msg = "Top ClickBank offers:\n"
+        msg = "Top Products:\n"
         for p in products[:10]:
             msg += (
                 f"- {p['name']} | Price: {p['price']} | Commission: {p['commission']}\n"
@@ -71,27 +76,30 @@ async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text(msg)
     except Exception as e:
         logger.error(f"Error in find_product: {e}", exc_info=True)
-        await update.message.reply_text("Error occurred during scraping.")
+        await update.message.reply_text("Scraping failed.")
+
 
 async def postvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Generating and posting video...")
+    await update.message.reply_text("Generating and posting TikTok video...")
     try:
         result = await post_video()
         await update.message.reply_text(f"Posted: {result}")
     except Exception as e:
         logger.error(f"Error in postvideo: {e}", exc_info=True)
-        await update.message.reply_text("Failed to post video.")
+        await update.message.reply_text("Video post failed.")
+
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     help_text = (
         "/start - Start the bot\n"
         "/stop - Stop the bot\n"
-        "/status - Get current status\n"
-        "/findproduct - Scrape trending products\n"
-        "/postvideo - Auto-generate and post TikTok video\n"
-        "/help - Show this help\n"
+        "/status - Bot status\n"
+        "/findproduct - Scrape top products\n"
+        "/postvideo - Generate and post video\n"
+        "/help - Show commands\n"
     )
     await update.message.reply_text(help_text)
+
 
 async def main() -> None:
     loop = asyncio.get_running_loop()
@@ -121,6 +129,7 @@ async def main() -> None:
     await app.updater.stop_polling()
     await app.stop()
     await app.shutdown()
+
 
 if __name__ == "__main__":
     try:
