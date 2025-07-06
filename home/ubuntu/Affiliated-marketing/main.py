@@ -33,7 +33,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 persistence = PicklePersistence(filepath="bot_data.pkl")
-
 shutdown_event = asyncio.Event()
 
 
@@ -47,26 +46,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_html(
         rf"Hi {user.mention_html()}! Bot is running 🚀", quote=True
     )
-    logger.info(f"/start command triggered by user {user.id}")
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
     await update.message.reply_text("Stopping bot gracefully...")
-    logger.info(f"/stop command triggered by user {user.id}")
     await context.application.stop()
     await context.application.shutdown()
     shutdown_event.set()
 
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # You can expand with actual status info later
     await update.message.reply_text("Bot is online and operational.")
 
 
 async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Starting product scraping...")
-    logger.info("Product scraping started by user command")
     try:
         products = await asyncio.to_thread(scrape_clickbank_top_offers)
         if not products:
@@ -75,7 +69,6 @@ async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         msg = "Top ClickBank offers:\n"
         for p in products[:10]:
-            # Expected product dict keys: name, price, commission, url, etc.
             msg += (
                 f"- {p['name']} | Price: {p['price']} | Commission: {p['commission']}\n"
                 f"  {p['url']}\n"
@@ -87,14 +80,13 @@ async def find_product(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def postvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Starting video posting...")
-    logger.info("Video posting started by user command")
+    await update.message.reply_text("Generating and posting video...")
     try:
         result = await post_video()
-        await update.message.reply_text(f"Video posted successfully: {result}")
+        await update.message.reply_text(f"Posted: {result}")
     except Exception as e:
         logger.error(f"Error in postvideo: {e}", exc_info=True)
-        await update.message.reply_text("Error occurred during video posting.")
+        await update.message.reply_text("Failed to post video.")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -102,30 +94,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/start - Start the bot\n"
         "/stop - Stop the bot\n"
         "/status - Get current status\n"
-        "/findproduct - Scrape and list top products\n"
-        "/postvideo - Post a product video on TikTok\n"
-        "/help - Show this help message\n"
-        "/dailyreport - Show today's sales report\n"
-        "/weeklyreport - Show this week's sales report\n"
-        "/resetstats - Reset performance stats\n"
+        "/findproduct - Scrape trending products\n"
+        "/postvideo - Auto-generate and post TikTok video\n"
+        "/help - Show this help\n"
     )
     await update.message.reply_text(help_text)
-    logger.info(f"/help command triggered by user {update.effective_user.id}")
-
-
-async def dailyreport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Placeholder - integrate your daily report logic here
-    await update.message.reply_text("Daily report: Not implemented yet.")
-
-
-async def weeklyreport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Placeholder - integrate your weekly report logic here
-    await update.message.reply_text("Weekly report: Not implemented yet.")
-
-
-async def resetstats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Placeholder - implement stats reset logic if needed
-    await update.message.reply_text("Stats reset: Not implemented yet.")
 
 
 async def main() -> None:
@@ -147,20 +120,15 @@ async def main() -> None:
     app.add_handler(CommandHandler("findproduct", find_product))
     app.add_handler(CommandHandler("postvideo", postvideo))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("dailyreport", dailyreport))
-    app.add_handler(CommandHandler("weeklyreport", weeklyreport))
-    app.add_handler(CommandHandler("resetstats", resetstats))
 
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
 
     await shutdown_event.wait()
-
     await app.updater.stop_polling()
     await app.stop()
     await app.shutdown()
-    logger.info("Bot stopped cleanly. Exiting.")
 
 
 if __name__ == "__main__":
@@ -170,5 +138,5 @@ if __name__ == "__main__":
         logger.info("Bot stopped by user.")
         sys.exit(0)
     except Exception as e:
-        logger.error(f"Unhandled exception in main: {e}", exc_info=True)
+        logger.error(f"Unhandled exception: {e}", exc_info=True)
         sys.exit(1)
