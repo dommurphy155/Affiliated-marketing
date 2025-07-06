@@ -133,10 +133,10 @@ async def main() -> None:
 
     await app.initialize()
     await app.start()
-    await app.updater.start_polling()
 
-    await shutdown_event.wait()
-    await app.updater.stop_polling()
+    # THIS IS THE CORRECT POLLING METHOD
+    await app.run_polling()
+
     await app.stop()
     await app.shutdown()
 
