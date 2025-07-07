@@ -1,45 +1,46 @@
 #!/bin/bash
-
-# ✅ Affiliate Marketing Bot Auto Deployment Script
-# Works on Ubuntu 20.04+ with Python 3.8+
-# Created by Dom’s request – Full deployment, no placeholders
-
 set -e
 
-# === Variables ===
-APP_NAME="affiliate-bot"
-APP_DIR="$HOME/affiliate-bot"
-VENV_DIR="$APP_DIR/venv"
-REPO_URL="https://github.com/dommurphy155/Affiliated-marketing.git"
-PYTHON_VERSION="3.8"
+echo "🚀 Starting full affiliate bot deployment..."
 
-# === Logging Helpers ===
-log() { echo -e "\033[1;32m[✔] $1\033[0m"; }
-err() { echo -e "\033[1;31m[✖] $1\033[0m"; exit 1; }
+# --- Clean Node.js/npm/pm2 install to avoid dependency hell ---
+echo "🛠️ Cleaning existing Node.js and npm installations..."
+sudo apt-get remove --purge -y nodejs npm || true
+sudo apt-get autoremove -y
+sudo rm -rf /usr/lib/node_modules /usr/local/lib/node_modules || true
 
-# === Pre-check ===
-[ "$EUID" -eq 0 ] && err "Don't run as root. Use a normal user."
+echo "🌐 Installing Node.js 18.x and npm via NodeSource..."
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
-log "Starting deployment of $APP_NAME..."
+echo "📦 Verifying Node.js and npm installation..."
+node -v
+npm -v
 
-# === Update system & install dependencies ===
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y \
-    python3 python3-pip python3-venv python3-dev \
-    build-essential git curl wget nodejs npm sqlite3 \
-    libsqlite3-dev libnss3 libatk-bridge2.0-0 libxss1 \
-    libgconf-2-4 libxcomposite1 libxdamage1 libxrandr2 \
-    libgtk-3-0 libasound2 libxkbcommon0 libgbm1 ca-certificates
-
-# === Install PM2 ===
+echo "⚙️ Installing pm2 globally..."
 sudo npm install -g pm2
 
-# === Clone Repo ===
-rm -rf "$APP_DIR"
-git clone "$REPO_URL" "$APP_DIR"
-cd "$APP_DIR"
+echo "✅ pm2 version:"
+pm2 --version
 
-# === Create .env with Dom’s credentials ===
+# --- Setup Python environment ---
+echo "🐍 Setting up Python 3.8+ virtual environment..."
+sudo apt-get update
+sudo apt-get install -y python3 python3-venv python3-pip build-essential libffi-dev libssl-dev
+
+# Create venv if missing
+if [ ! -d "venv" ]; then
+  python3 -m venv venv
+fi
+
+source venv/bin/activate
+
+echo "📥 Upgrading pip and installing Python dependencies..."
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+
+# --- Environment variables ---
+echo "⚙️ Writing .env file..."
 cat > .env <<EOF
 OPENAI_API_KEY=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
 TELEGRAM_BOT_TOKEN=7970729024:AAFIFzpY8-m2OLY07chzcYWJevgXXcTbZUs
@@ -51,66 +52,22 @@ CAPCUT_EMAIL=dommurphy155@gmail.com
 CAPCUT_PASSWORD=Lorenzo1!
 EOF
 
-chmod 600 .env
+echo "✅ .env file created."
 
-# === Python Environment ===
-python3 -m venv "$VENV_DIR"
-source "$VENV_DIR/bin/activate"
-pip install --upgrade pip
+# --- PM2 start script ---
+echo "🔄 Starting affiliate bot with pm2..."
 
-# === Requirements ===
-cat > requirements.txt <<EOF
-python-telegram-bot==20.7
-python-dotenv==1.0.0
-playwright==1.40.0
-openai==1.14.3
-aiohttp==3.9.1
-EOF
+# Kill existing pm2 process with this name if exists
+pm2 delete affiliate-bot || true
 
-pip install -r requirements.txt
-python -m playwright install
+pm2 start main.py --interpreter ./venv/bin/python --name affiliate-bot
 
-# === AsyncIO Failsafe Fix (if needed) ===
-cat > run_safe.py <<'EOF'
-import asyncio
-from main import AffiliateBot
+echo "✅ Bot started under pm2 process manager."
 
-def run_bot():
-    try:
-        asyncio.run(AffiliateBot().run())
-    except RuntimeError as e:
-        if "asyncio.run()" in str(e):
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(AffiliateBot().run())
+# --- Fail-safe notes ---
+echo "⚠️ Note: This deploy script assumes main.py is your bot entry point."
+echo "⚠️ Make sure main.py uses updated OpenAI API calls (>=1.0.0) and CapCut for video generation."
+echo "⚠️ Ensure your bot handles asyncio loops correctly. If you face asyncio.run errors, consider applying fixes in your Python code to close existing loops before running."
+echo "⚠️ Check logs anytime with 'pm2 logs affiliate-bot'."
 
-if __name__ == "__main__":
-    run_bot()
-EOF
-
-# === PM2 Config ===
-cat > ecosystem.config.js <<EOF
-module.exports = {
-  apps: [{
-    name: "$APP_NAME",
-    script: "run_safe.py",
-    interpreter: "$VENV_DIR/bin/python",
-    cwd: "$APP_DIR",
-    autorestart: true,
-    watch: false,
-    max_memory_restart: "512M",
-    env: {
-      NODE_ENV: "production"
-    }
-  }]
-}
-EOF
-
-# === PM2 Startup ===
-pm2 stop $APP_NAME || true
-pm2 delete $APP_NAME || true
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup systemd -u $USER --hp $HOME
-
-log "Deployment complete!"
-log "Use 'pm2 logs $APP_NAME' to monitor."
+echo "🎉 Deployment complete. Your affiliate bot is now running 24/7."
