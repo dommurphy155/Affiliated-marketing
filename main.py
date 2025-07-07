@@ -10,6 +10,9 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Callb
 import openai
 from playwright.async_api import async_playwright
 
+import os
+from dotenv import load_dotenv
+
 load_dotenv()
 
 # Check env vars
