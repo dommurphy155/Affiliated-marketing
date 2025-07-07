@@ -259,27 +259,28 @@ class AffiliateBot:
         if not pending:
             await update.message.reply_text("❌ No qualifying products found.")
             return
+for product in pending:
+    await self.send_approval(update, product)
 
-        for product in pending:
-            await self.send_approval(update, product)
+await update.message.reply_text(f"🎯 Sent {len(pending)} products for review!")
 
-        await update.message.reply_text(f"🎯 Sent {len(pending)} products for review!")
-
-    async def send_approval(self, update, product):
-        link = f"{product['url']}?tid={CLICKBANK_NICKNAME}"
-        text = (
-            f"🔥 Product: {product['name']}\n"
-            f"💰 Commission: {product['commission_pct']}%\n"
-            f"📈 Est. Sales: {product['estimated_sales']}\n"
-            f"🛍️ Category: {product['category']}\n"
-            f"🔗 {link}"
-        )
-        keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("✅ Approve", callback_data=f"approve|{product['url']}"),
-                InlineKeyboardButton("❌ Reject", callback_data=f"reject|{product['url']}")
-            ]
-        ])
+async def send_approval(self, update, product):
+    link = f"{product['url']}?tid={CLICKBANK_NICKNAME}"
+    text = (
+        f"🔥 Product: {product['name']}\n"
+        f"💰 Commission: {product['commission_pct']}%\n"
+        f"📈 Est. Sales: {product['estimated_sales']}\n"
+        f"🛍️ Category: {product['category']}\n"
+        f"🔗 {link}"
+    )
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✅ Approve", callback_data=f"approve|{product['url']}"),
+            InlineKeyboardButton("❌ Reject", callback_data=f"reject|{product['url']}")
+        ]
+    ])
+    await update.message.reply_text(text, reply_markup=keyboard)
+        
         await update.message.reply_text(text, reply_markup=keyboard)
 
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
